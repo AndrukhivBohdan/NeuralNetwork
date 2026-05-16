@@ -34,8 +34,8 @@ def load_imdb_data(base_path, subset='train'):
     for label_type in ['pos', 'neg']:
         dir_name = os.path.join(base_path, subset, label_type)
         label = 1 if label_type == 'pos' else 0
-        for fname in os.listdir(dir_name)[:8192]: # для прискорення при тестуванні проміжних варіантів моделі можна використати частину набору даних
-        #for fname in os.listdir(dir_name):
+        #for fname in os.listdir(dir_name)[:8192]: # для прискорення при тестуванні проміжних варіантів моделі можна використати частину набору даних
+        for fname in os.listdir(dir_name):
             with open(os.path.join(dir_name, fname), encoding='utf-8') as f:
                 texts.append(f.read())
                 labels.append(label)
@@ -243,4 +243,40 @@ def plot_metrics(train_losses, val_losses, train_accs, val_accs):
     plt.show()
 
 plot_metrics(train_loss_history, val_loss_history, train_acc_history, val_acc_history)
+
+reviews = [
+    "I expected to hate it, but it was actually the best movie of the year.", 
+    "The plot was as deep as a puddle.",                                     
+    "It was not a bad film, but certainly not a great one either.",           
+    "This movie was absolutely amazing and wonderful, I loved every minute!", 
+    "Terrible acting, boring plot, and a complete waste of time and money."  
+]
+
+print("\n" + "="*50)
+print("STARTING CUSTOM REVIEWS ANALYSIS")
+print("="*50)
+
+model.eval()
+
+device = next(model.parameters()).device
+
+with torch.no_grad():
+    encoded_reviews = encode_text(reviews)
+    
+    encoded_reviews = encoded_reviews.to(device)
+    
+    predictions = model(encoded_reviews)
+    
+    for i, review in enumerate(reviews):
+        score = predictions[i].item()
+        
+        sen = "POSITIVE " if score >= 0.5 else "NEGATIVE "
+        
+        confidence = abs(score - 0.5) * 2 * 100
+        
+        print(f"\nReview #{i+1}: \"{review}\"")
+        print(f"  -> Raw Output Probability: {score:.4f}")
+        print(f"  -> Predicted Sentiment   : {sentiment} (Confidence: {confidence:.1f}%)")
+
+print("\n" + "="*50)
 
